@@ -1,1 +1,1 @@
-# new-gate-api-specification
+# New Gate - API Specification
