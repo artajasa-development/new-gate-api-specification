@@ -1128,3 +1128,227 @@ This API is used specifically for **Topup** billers that require some form of da
     }
 }
 ```
+
+# 6\. Channel Id
+
+The valid value for tag transId.channelId are as follow:
+
+| **Channel Id** | **Description** |
+| --- | --- |
+| 6010 | Teller |
+| 6011 | ATM |
+| 6012 | EDC |
+| 6013 | Phone Banking |
+| 6014 | Internet Banking |
+| 6015 | KIOSK |
+| 6016 | Auto Debit |
+| 6017 | Mobile Banking/SMS Banking |
+
+
+# 7\. Response Code
+| **Code** | **Description** |
+| --- | --- |
+| 00 | Successful |
+| 03 | Invalid merchant |
+| 05 | Undefined error/Do not Honor |
+| 12 | Invalid Transaction/Reversal denied/BP host cannot reversal |
+| 13 | Invalid transaction amt(not same as total bill) |
+| 14 | Customer ID/Card number is not found |
+| 15 | No such issuer/merchant |
+| 20 | Invalid Response |
+| 27 | Payment ID status cannot be processed |
+| 30 | Format error |
+| 31 | Bank not supported by switch |
+| 40 | Bank not supported by BP |
+| 41 | Transaction amount is below minimum value |
+| 51 | Insufficient Balance |
+| 57 | Account Type not supported |
+| 58 | Delivery channel not supported |
+| 59 | Suspected Fraud |
+| 61 | Maximum topup amount reach |
+| 63 | Security violation |
+| 65 | Maximum topup frequency reach |
+| 68 | Inq/Trf/Pay/rvsl denied by late response |
+| 69 | Pay denied by database timeout |
+| 70 | Pay denied by voucher not exists |
+| 76 | Different customer name in one bills |
+| 77 | There are more than 3 unpaid bills/no related account |
+| 79 | Phone number blocked |
+| 80 | At least 1 bill reference is not found |
+| 81 | Phone number expired |
+| 83 | Too close to previous transactions |
+| 88 | Payment denied, bill already paid |
+| 89 | Link to bill provider is down |
+| 91 | Database problem |
+| 92 | Unable to route transaction |
+| 94 | Duplicate reversal request |
+| 96 | System Malfunction/system error |
+
+
+# 8\. Signature
+
+For security purposes, an encrypted signature on the request is **mandatory**, while the same method on the **response** can be provided **as an option** should the Collecting Agent (CA) wants it. The encryption method acceptable by the system at the moment is as follows:
+
+- HMAC-SHA256 (**default**)
+    
+- SHA256 with RSA
+    
+
+Only one of the methods given above are applicable at any given moment for a Collecting Agent’s entire API features (Inquiry, Payment, etc.), and that method will apply in both the request and the response (if the CA requires it).
+
+
+## 8.1. HMAC-SHA256
+
+For this method, the formula to generate the string that needs to be signed to construct the signature is **payload:timestamp**. AJ will create a secretkey string for CA, which will be used to sign the previous string on signature request. This is **mandatory**.
+
+That very same key will then be used to construct the signature on the response, **if** the CA **opts for it**. Therefore a signature response **can be provided. If AJ is not required to provide a signature on the response**, then the system will instead send back the signature sent on the request.
+
+The example for this method can be seen below:
+
+- Secretkey : Art4ja54
+    
+- Payload : Contains the request body sent.  
+    o Note that any unneeded whitespaces, tabs, and/or newlines needs to be **removed** from the payload to construct this signature, with one way of doing it is through **minify**(RequestBody)
+    
+
+```
+{"billerId":"45034","transId":{"RRN":"129999910133","STAN":"000133","termId":"12999991","channelId":"6010"},"transData":{"idCustomer":"0857222222210","adminFee":0,"billAmount":0,"billKey1":"","billKey2":""}}
+
+ ```
+
+- Timestamp : 2020-08-17T19:45:21+07:00
+    
+- minify(RequestBody):timestamp (string_to_sign): {"billerId":"45034","transId":{"RRN":"129999910133","STAN":"000133""termId":"12999991","channelId":"6010"},"transData":{"idCustomer":"0857222222210","adminFee":0,"billAmount":0,"billKey1":"","billKey2":""}}:2020-08-17T19:45:21+07:00
+    
+- Hex Encoded Signature HMAC-SHA 256: 7f2444e6dce051e70e960cfa46e4f649bab6846423a1bed4e381c7a64f5eade1
+
+## 8.2. SHA256 with RSA
+
+For this method, the formula to generate the string that needs to be signed to construct the signature is **payload:timestamp**. For the request, the CA needs to generate a pair of public and private key, and then provide to AJ the public key so that this system can verify the signature generated. This is **mandatory**.
+
+For the response, if the CA opts for it then AJ will generate a pair of public and private key. AJ will then send the public key to the CA using a method that is acceptable for the CA. When AJ sends a signature on the response, the CA can then verify it using the public key sent beforehand.  
+**If AJ is not required to provide a signature on the response**, then the system will instead send back the signature sent on the request.
+
+Below are the steps to construct the signature:
+
+**Private - Public Key:**
+
+- **Public Key:**  
+    Please provide the public key in a X.509 (.pem) file format. An example of the file content is:
+    
+
+```
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqQEHfEV/C0+rNWuCdneY
+9Ctak5JWDlX+HpRN9Oj/rdf57rkwBqAY1kKI5M9f3IYS+kpJgrZe8L+r71FW1p+V
+25ZgxsbCRtW9U5uLUEMDQM9VbAYTUAhioyCZafLjQHKdMteEd2S5gBveEbLQWb0r
+AEwEpnqbWOc+dNuDHgoJAOaCCnflYEx02TCQorIfZBo+QOIw90h2X33hwpmHtTUI
+3lCqwPrj45qW2gJtR54rwEwpLS3lkqN2KrC+GaxYXaLd3Pv9s+Rl3tufI5aFYd+o
+33Jzs2Damg58sIPeqqKKtjtybl6t2rqlO1kKHzV9bO6VyJUnAfkiqwW9tR2bFHXo
+gwIDAQAB
+-----END PUBLIC KEY-----
+
+ ```
+
+- **Private Key:**
+    
+
+As a sample, a matching private key to the public key above would be like so:
+
+```
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCpAQd8RX8LT6s1
+a4J2d5j0K1qTklYOVf4elE306P+t1/nuuTAGoBjWQojkz1/chhL6SkmCtl7wv6vv
+UVbWn5XblmDGxsJG1b1Tm4tQQwNAz1VsBhNQCGKjIJlp8uNAcp0y14R3ZLmAG94R
+stBZvSsATASmeptY5z5024MeCgkA5oIKd+VgTHTZMJCish9kGj5A4jD3SHZffeHC
+mYe1NQjeUKrA+uPjmpbaAm1HnivATCktLeWSo3YqsL4ZrFhdot3c+/2z5GXe258j
+loVh36jfcnOzYNqaDnywg96qooq2O3JuXq3auqU7WQofNX1s7pXIlScB+SKrBb21
+HZsUdeiDAgMBAAECggEAAvvOqwX7ETMN3bqRKhBAdgcR6UsLE+O2wclyeuFmKiaG
+9gz06RkIdzfjfM6gbZ88VIjdNV6M3Ik1utrfwpg8qAzGlpvJsEBzwDcdxYP5WbqP
+UoHk82PCggjATJuKIYgkeFJPt1/i2n0jdYKHpR3u1WmCJ4JAndgvRRbfALfCou5n
+geebj0/P64q4ZA7K42WjUX2vTVcWZNM2/2H/HhSWPU+BVPeeiXjPO/PSp8Z74Xd4
+EkvaI+9Blrp8aKwWeLx3snjyd3rEhx0uXdlbpR9eApvrmAnVrmzb4DbOgp/zvhJy
+vRe0EfTOU8GlEMX2NsE4DYPSx0zBti8GGH3Z4BWUkQKBgQDXyBTKJ1N66YGN5I0K
+a5uRu26Lu2LASKAWjoJksjTVn3ezTgibuEbwkL8/qBHlnjXwNWw8goQs5yHjJUw+
+7bhhqWbPrUjwVA847ujQm0WaCN2BEKMZxNINdYKVT7+ttQDEbwjZ7+3pZJ9SlxnZ
+qcZtYA2DodgnN0WP7XjVEJXjCQKBgQDIgPqRZOve3S1duwGxI77nII4+HtNnyC8J
+Pu76SFI3sYSGDvJkP9PTQUjL6hUXA+r1F6KWTYuWtX3JqUH51e5fOr3nypfq1lAq
+PLR0uYts4TfAaxwSpHBdSsjs/kvhpV0EZCIEOkKahmnheprePPn06cYwvA4sJJj0
+I0ICbxYWKwKBgGmKpJiICa3pvoNfkZjSL0JlkdloqxFvtFW0GJUWEP+Xwx2BgnZf
++Nq7gb+p/i74Zlt6Vdl24R1xY8LNQHDbJz8lc3MKx8084EExodA+0hlYUrdJIu18
+tlz86AUN/6wAB0MNKCAo2Y45uC/WVj9/ad2fiJyksavkvfJ67YoRVa65AoGBAKsk
+jLx2LG8603JiIXuWS2j1fPTBUyoO0TdPJKU1/hfTyo6zS2sOoDx+SSjlUcMncPJr
+jjhFUJT/rbLoaoxacvGOLnMflrS44gxrbI0Fo2D4jKINyxSOj+rR3teL6DFe+Rq6
+bd617AwCF3aDNJXl7mWC9cy7eE1tn7EkNz/kmjGpAoGBAJDa/6r26ntgFyBvX0VS
+gkKMeQsTKYcBdJFN1nWKxW8ASqpD9+BJpX8e1PhDHCfVlt9TBSuW5ieGp2Ydtzew
+Yg9LQ8weVw9KrELApkyrWfK4ZP7VDgZKemyX+t1HhV2INAJ2cmqxELZCSAHXNuze
+JCpT5TzjAHH5TDnird2WZyFi
+-----END PRIVATE KEY-----
+
+ ```
+
+- Generating Key Pairs
+    
+
+There are many ways to generate an RSA key pair, but the example below will list how to generate a 2048-bit RSA key pair using the OpenSSL library:
+
+```
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt
+rsa_keygen_bits:2048
+openssl rsa -in private_key.pem -pubout -out public_key.pem
+
+ ```
+
+This will result in a **private key** file named ”private_key.pem” and a **public key** file named ”public_key.pem” to be generated in your current directory.
+
+**Signature Construction:**
+
+1\. payload : Contains the request body sent.  
+\- Note that any **unneeded** whitespaces, tabs, and/or newlines needs to be **removed** from the payload to construct this signature, with one way of doing it is through **minify**(RequestBody)
+
+```
+{"billerId":"45034","transId":{"RRN":"129999910133","STAN":"000133","termId":"12999991","channelId":"6010"},"transData":{"idCustomer":"0857222222210","adminFee":0,"billAmount":0,"billKey1":"Sample Data","billKey2":""}}
+
+ ```
+
+2\. Timestamp : 2020-08-17T19:45:21+07:00
+
+3\. string_to_sign: payload:timestamp
+
+```
+{"billerId":"45034","transId":{"RRN":"129999910133","STAN":"000133""termId":"12999991","channelId":"6010"},"transData":{"idCustomer":"0857222222210","adminFee":0,"billAmount":0,"billKey1":"Sample Data","billKey2":""}}:2020-08-17T19:45:21+07:00
+
+ ```
+
+4\. Sign the ”string_to_sign” above with the Private Key that matches the Public Key sent to AJ using the **SHA-256**.  
+5\. Convert the binary result into single-line Base64 for use in the **Authentication** HTTP Header.
+
+- An example of a Base64 encoded signature that can be validated by the public key example above is:
+    
+
+```
+Uic9cu1tBPkxTi6IJ6K9IbovdOURk2otn8tunP+/5ZELzALNjeC6TTssZnnCfzxZNMcjwP0nyP3H9iNHHRjIMgeH4JwpHKRpw2/+FgFm1LFioipRPFM9YkSN7Q39T9ILX24y7JjifWN898UicCcq7QQ5D590SA+tqoor2oSp9ocmLNFCB2RFstNUg6KtUO9D7UFWllT8WL52PIpTArj11O03DJBrNU+IT1DQ+5QmXMUZ6/m6NBmhDxSz/zJFWxvbfsrxMOsOq8j7QG3Szo9nj1RTtOfj6IbY0zMbM+5rfR3KOYjdK4Sw3kZ5cZ7RZWX/p8b+mLLf6nGw9uxwnOWQdA==
+
+ ```
+
+- Please note that decoding the base64 above into binary may need to take into account that this is Base64 without line breaks.
+
+
+# 9\. Receipt Format
+<img src="https://content.pstmn.io/57008023-a785-41f6-9053-9ae596fe9890/aW1hZ2UucG5n" width="386" height="312">
+
+**Field-Field Mandatory:**
+
+1. Institution Name CA/BANK
+    
+2. Transaction Datetime
+    
+3. Terminal Number/ID
+    
+4. Terminal Location
+    
+5. Receipt Number
+    
+6. Body Content: described for each feature in Biller Implementation
+    
+7. The statement to show that this receipt can be used as a valid proof of payment
