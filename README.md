@@ -56,3 +56,1075 @@ For PLN Prepaid timeout of payment, client or sender shall send API advice.
 
 If client or sender get negative response or no response of advice, retry advice shall be sent automatically. Retry advice shall be sent three times. If still get negative response or no response of advice, client or sender shall performe manual advice. And if still get negative response or no response of manual advice, the transaction is suspect and receipt of suspect shall be printed.  
 Retry advice shall be sent within 30-35 seconds.
+
+# 5\. Message Formats
+
+This section of the System Requirement Specifications Manual describes the message formats for New Gate system.
+
+The message format charts provided in this section of the manual use the following notations to identify individual data element usage requirements.
+
+The field name on the API is case sensitive.
+
+| **Notation** | **Interpretation** |
+| --- | --- |
+| M | "Mandatory": The data element is mandatory, and must be provided in the message by the message originator |
+| C | "Conditional": The data element is conditionally required to be provided by the sender when specific conditions are applicable. |
+| O | “optional”: The data elements is optional to be sent |
+
+## 5.1. Postman Sample
+
+For the following API:
+
+- Inquiry
+    
+- Payment
+    
+- Check Status
+    
+
+There is a **Postman collection** that can be downloaded to look at the sample Request and Response as well as simple scripts simulating how some fields involved in this specification should behave in live environment. The name of the collection is:
+
+- API-01-New Gate Sample Messages version .postman_collection
+
+
+## 5.2. Inquiry
+
+This API is used to do inquiry transaction.
+
+- HTTP Method: **POST**
+    
+- Path for **Payment Billers**: /Artajasa/bersamaPayment/inquiry
+    
+- Path for **Topup Billers**: /Artajasa/bersamaTopup/inquiry
+    
+- HTTP Headers
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | Signature Request |
+| timestamp | String, date formatted | M | time of transaction on with time zone information, (ISO 8601) format |
+| acquirerId | String | M | acquirer id identifier given by AJ |
+
+- Query String Parameters: None
+    
+- Format: application/json
+    
+- Authentication: None
+    
+- Request Definitions
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Unique biller ID |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | List of data related to biller to do transaction |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | System Trace Audit Number, Value increase by 1 from previous transaction |
+| RRN | String, 12 digit numeric | M | Retrieval reference number — unique ID incremented by end-user request |
+| termId | String, max 15 digit | M | Unique terminal ID per end-user / mobile number |
+| channelId | String, max 4 digit | O | It is used to know the type of channel where the transaction is performed. See list of channel Id for detail channel type information |
+| subAcqId | String, max 8 digit numeric | C | Sub Acquirer ID. It must exist if the Collecting Agent (acquirer) is aggregator that has ‘Sub-Acquirer’ as payment channel. |
+
+**transData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| idCustomer | String | M | customer id from biller |
+| adminFee | Numeric | O | placeholder for admin on inquiry response. Any valid value from request will be ignored |
+| billAmount | Numeric | O | placeholder for bill amount on inquiry response. Any valid value from request will be ignored |
+| billKey1 | String | C | additional bill data identifier |
+| billKey2 | String | C | additional bill data identifier |
+
+- HTTP Headers Response:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | signature response, optionally provided if the CA wants it, otherwise it defaults to the same signature in the request. |
+| timestamp | String, date formatted | M | time of AJ response time with time zone information, (ISO 8601) format |
+
+- Response Definition:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Echo from request |
+| paymentType | String | M | Indicate supported payment type for given biller. Possible value are:  <br>\- “Open” for open payment  <br>\- “Closed” for close payment |
+| isFundSuspend | Boolean | M | Indicate CA shall suspend customer’s fund or not. Possible values are:  <br>\- **true**: Customer’s fund shall be suspended  <br>\- **false**: Customer’s fund shall not be suspended |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | List of data related to biller to do transaction |
+| billInfo | Array of Object | C | List of bill information from biller. Will be given if transaction is successful |
+| descUI | String | M | Text data need to be displayed after inquiry.  <br>Data content of this field follow the standard JSON String type. |
+
+**transId**
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | Echo from request |
+| RRN | String, 12 digit numeric | M | Echo from request |
+| termId | String, max 15 digit | M | Echo from request |
+| channelId | String, max 4 digit | O | Echo from request |
+| subAcqId | String, max 8 digit numeric | C | Echo from request |
+| authKey | String | M | Unique key to internally identify payment process. Should be sent later during payment request |
+| respCode | String | M | Response code from biller/API. See list of response code for detail error information |
+
+**transData**
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| idCustomer | String | M | Echo from request |
+| adminFee | Numeric | O | admin fee from biller, if any. |
+| billAmount | Numeric | O | bill amount from biller, if any. In case of open payment, this field will be set to zero. |
+| billKey1 | String | O | Echo from request |
+| billKey2 | String | O | Echo from request |
+
+**billInfo**
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| field | String | M | field name of bill information |
+| ID | Number | M | unique field ID, please refer to appendix document |
+| isArray | Boolean | M | identifier whether the value is a list of value(array) or single value. If it’s an array, character coma (,) should be used to split it. |
+| value | String | C | value of bill information. Will be filled if isArray is false |
+| arrValue | Array String | C | List string value of bill information. Will be filled if isArray is true |
+
+
+### Example Request
+```json
+  {
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910133",
+        "STAN": "000133",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 0,
+        "billAmount" : 0,
+        "billKey1" : "",
+        "billKey2" : ""
+    }
+  }
+```
+
+### Example Response
+```json
+{
+    "billerId": "45034",
+    "paymentType": "Open",
+    "isFundSuspend": true,
+    "transId": {
+        "RRN": "129999910133",
+        "STAN": "000133",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "respCode": "00"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "Periode",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "Biaya Denda",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ],
+    "descUI" :"blablabla"
+}
+```
+
+## 5.3. Payment
+This API is used to do payment transaction.
+
+- HTTP Method: **POST**
+    
+- Path for **Payment Billers**: /Artajasa/bersamaPayment/payment
+    
+- Path for **Topup Billers**: /Artajasa/bersamaTopup/payment
+    
+- HTTP Headers:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | Signature Request |
+| timestamp | String, date formatted | M | time of transaction on with time zone information, (ISO 8601) format |
+| acquirerId | String | M | acquirer id identifier given by AJ |
+
+- Query String Parameters: None
+    
+- Format: application/json
+    
+- Authentication: None
+    
+- Request Definitions:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Unique biller ID |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | List of data related to biller to do transaction. should be the same with inquiry response |
+| billInfo | Array of Object | M | List of biller information. Results from the inquiry response should be sent back here. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | System Trace Audit Number, Value increase by 1 from previous transaction |
+| RRN | String, 12 digit numeric | M | Retrieval reference number — unique ID incremented by end-user request |
+| termId | String, max 15 digit | M | Unique terminal ID per end-user / mobile number |
+| channelId | String, max 4 digit | O | It is used to know the type of channel where the transaction is performed. See list of channel Id for detail channel type information |
+| subAcqId | String, max 8 digit numeric | C | Sub Acquirer ID. It must exist if the Collecting Agent (acquirer) is aggregator that has ‘Sub-Acquirer’ as payment channel. |
+| authkey | String | M | Unique key retrieve from inquiry response. |
+| totalAmount | Numeric | M | Total Payment amount, include admin fee (billAmount + adminFee) |
+
+**transData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| idCustomer | String | M | customer id from biller |
+| adminFee | Numeric | M | admin fee retrieve from inquiry response. |
+| billAmount | Numeric | M | bill amount retrieve from inquiry response. In case of open payment, sender should fill the payment amount from customer here, exclude admin fee. Basically this is the amount customer need to pay, exclude admin fee |
+| billKey1 | String | C | additional bill data identifier, same with inquiry request |
+| billKey2 | String | C | additional bill data identifier, same with inquiry request |
+
+- HTTP Headers Response:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | signature response, **optionally provided** if the CA wants it, otherwise it defaults to the same signature in the request. |
+| timestamp | String, date formatted | M | time of AJ response time with time zone information, (ISO 8601) format |
+
+- Response Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Echo from request |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | Echo from request |
+| billInfo | Array of Object | M | The minimum data is echo from request. There can be additional data in payment response. Please refers to Appendix document.  <br>If there is no information, the will be the same as request. |
+| billRefInfo | Object | C | Object of bill reference information if transaction successful |
+| descUI | String | C | Text data need to be displayed after inquiry.  <br>Data content of this field follow the standard JSON String type. |
+| footer | String | C | Information from biller, that expected to be shown on footer receipt. Data content of this field follow the standard JSON String type. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | Echo from request |
+| RRN | String, 12 digit numeric | M | Echo from request |
+| termId | String, max 15 digit | M | Echo from request |
+| channelId | String, max 4 digit | O | Echo from request |
+| subAcqId | String, max 8 digit numeric | C | Echo from request |
+| authKey | String | C | Echo from request |
+| totalAmount | Numeric | M | Echo from request |
+| respCode | String | M | Response code from biller/API. See list of response code for detail error information |
+
+**billInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| field | String | M | field name of bill information |
+| isArray | Boolean | M | identifier whether the value is a list of value(array) or single value. If it’s an array, character coma (,) should be used to split it |
+| value | String | M | value of bill information |
+
+**billRefInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billRef | String | M | Reference from biller as proof of payment |
+| additionalInfo1 | String | C | additional info from biller on successful payment |
+| additionalInfo2 | String | C | additional info from biller on successful payment |
+
+### Example Request
+```json
+{
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.00
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "idCustomer",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "unsoldToken",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ]
+}
+```
+
+### Example Response
+```json
+{
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.00,
+        "respCode": "00"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "idCustomer",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "unsoldToken",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ],
+    "billRefInfo": {
+        "billRef": "asdnqoqwe1",
+        "additionalInfo1": "2020-08-20",
+        "additionalInfo2" : null
+    },
+    "descUI" :"blablabla",
+    "footer" :"Thanks For Your Purchase"
+}
+```
+
+## 5.4. Advice
+This API is use to do advice transaction. The format of data is the same as Payment but different HTTP Method Path
+
+- HTTP Method: **POST**
+    
+- Path for **Payment Billers**: /Artajasa/bersamaPayment/advice
+    
+- HTTP Headers:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | Signature Request |
+| timestamp | String, date formatted | M | time of transaction on with time zone information, (ISO 8601) format |
+| acquirerId | String | M | acquirer id identifier given by AJ |
+
+- Query String Parameters: None
+    
+- Format: application/json
+    
+- Authentication: None
+    
+- Request Definitions:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Unique biller ID |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | List of data related to biller to do transaction. should be the same with inquiry response |
+| billInfo | Array of Object | M | List of biller information. Results from the inquiry response should be sent back here. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | System Trace Audit Number, Value increase by 1 from previous transaction |
+| RRN | String, 12 digit numeric | M | Retrieval reference number — unique ID incremented by end-user request |
+| termId | String, max 15 digit | M | Unique terminal ID per end-user / mobile number |
+| channelId | String, max 4 digit | O | It is used to know the type of channel where the transaction is performed. See list of channel Id for detail channel type information |
+| subAcqId | String, max 8 digit numeric | C | Sub Acquirer ID. It must exist if the Collecting Agent (acquirer) is aggregator that has ‘Sub-Acquirer’ as payment channel. |
+| authkey | String | M | Unique key retrieve from inquiry response. |
+| totalAmount | Numeric | M | Total Payment amount, include admin fee (billAmount + adminFee) |
+
+**transData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| idCustomer | String | M | customer id from biller |
+| adminFee | Numeric | M | admin fee retrieve from inquiry response. |
+| billAmount | Numeric | M | bill amount retrieve from inquiry response. In case of open payment, sender should fill the payment amount from customer here, exclude admin fee. Basically this is the amount customer need to pay, exclude admin fee |
+| billKey1 | String | C | additional bill data identifier, same with inquiry request |
+| billKey2 | String | C | additional bill data identifier, same with inquiry request |
+
+- HTTP Headers Response:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | signature response, **optionally provided** if the CA wants it, otherwise it defaults to the same signature in the request. |
+| timestamp | String, date formatted | M | time of AJ response time with time zone information, (ISO 8601) format |
+
+- Response Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Echo from request |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | Echo from request |
+| billInfo | Array of Object | M | The minimum data is echo from request. There can be additional data in payment response. Please refers to Appendix document.  <br>If there is no information, the will be the same as request. |
+| billRefInfo | Object | C | Object of bill reference information if transaction successful |
+| descUI | String | C | Text data need to be displayed after inquiry.  <br>Data content of this field follow the standard JSON String type. |
+| footer | String | C | Information from biller, that expected to be shown on footer receipt. Data content of this field follow the standard JSON String type. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | Echo from request |
+| RRN | String, 12 digit numeric | M | Echo from request |
+| termId | String, max 15 digit | M | Echo from request |
+| channelId | String, max 4 digit | O | Echo from request |
+| subAcqId | String, max 8 digit numeric | C | Echo from request |
+| authKey | String | C | Echo from request |
+| totalAmount | Numeric | M | Echo from request |
+| respCode | String | M | Response code from biller/API. See list of response code for detail error information |
+
+**billInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| field | String | M | field name of bill information |
+| isArray | Boolean | M | identifier whether the value is a list of value(array) or single value. If it’s an array, character coma (,) should be used to split it |
+| value | String | M | value of bill information |
+
+**billRefInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billRef | String | M | Reference from biller as proof of payment |
+| additionalInfo1 | String | C | additional info from biller on successful payment |
+| additionalInfo2 | String | C | additional info from biller on successful payment |
+
+### Example Request
+```json
+{
+    "billerId": "45039",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.00
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "idCustomer",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "unsoldToken",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ]
+}
+```
+
+### Example Response
+```json
+{
+    "billerId": "45039",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.00,
+        "respCode": "00"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "idCustomer",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "unsoldToken",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ],
+    "billRefInfo":{
+        "billRef": "asdnqoqwe1",
+        "additionalInfo1": "2020-08-20",
+        "additionalInfo2" : null
+    },
+    "descUI" :"blablabla",
+    "footer" :"Thanks For Your Purchase"
+}
+```
+
+## 5.5. Check Status
+
+This API is used to check transaction status of payment request (rc)
+
+- HTTP Method: **POST**
+    
+- Path for **Payment Billers**: /Artajasa/bersamaPayment/status
+    
+- Path for **Topup Billers**: /Artajasa/bersamaTopup/status
+    
+- HTTP Headers:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | Signature Request |
+| timestamp | String, date formatted | M | time of transaction on with time zone information, (ISO 8601) format |
+| acquirerId | String | M | acquirer id identifier given by AJ |
+
+- Query String Parameters: None
+    
+- Format: application/json
+    
+- Authentication: None
+    
+- Request Definitions:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Unique biller ID |
+| transId | Object | M | Object used to identify transaction. Use the same transId on payment request. |
+| transData | Object | M | List of data related to biller to do transaction. Use the same transData on paymentRequest |
+
+- HTTP Headers Response:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | signature response, **optionally provided** if the CA wants it, otherwise it defaults to the same signature in the request. |
+| timestamp | String, date formatted | M | time of AJ response time with time zone information, (ISO 8601) format |
+
+- Response Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Echo from request |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | Echo from request |
+| billInfo | Array of Object | C | Echo from request |
+| billRefInfo | Object | C | Object of bill reference information if transaction successful |
+| descUI | String | M | Text data need to be displayed after inquiry.  <br>  <br>Data content of this field follow the standard JSON String type. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | Echo from request |
+| RRN | String, 12 digit numeric | M | Echo from request |
+| termId | String, max 15 digit | M | Echo from request |
+| channelId | String, max 4 digit | O | Echo from request |
+| subAcqId | String, max 8 digit numeric | C | Echo from request |
+| authKey | String | C | Echo from request |
+| respCode | String | M | Response code from biller/API. See list of response code for detail error information |
+
+**billInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| field | String | M | field name of bill information |
+| isArray | Boolean | M | identifier whether the value is a list of value(array) or single value. If it’s an array, character coma (,) should be used to split it |
+| value | String | M | value of bill information |
+
+**billRefInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billRef | String | M | Reference from biller as proof of payment |
+| additionalInfo1 | String | O | additional info from biller on successful payment |
+| additionalInfo2 | String | O | additional info from biller on successful payment |
+
+### Example Request
+```json
+{
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.0
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    }
+}
+```
+
+### Example Response
+```json
+{
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910133",
+        "STAN": "000133",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.0,
+        "respCode": "00"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "idCustomer",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "unsoldToken",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ],
+    "billRefInfo":{
+        "billRef": "asdnqoqwe1",
+        "additionalInfo1": "2020-08-20",
+        "additionalInfo2" : null
+    },
+    "descUI" :"blablabla"
+}
+```
+
+## 5.6. Reversal
+This API is used to reverse payment request.
+
+- HTTP Method: **POST**
+    
+- Path: /Artajasa/bersamaPayment/Reversal
+    
+- HTTP Headers:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | Signature Request |
+| timestamp | String, date formatted | M | time of transaction on with time zone information, (ISO 8601) format |
+| acquirerId | String | M | acquirer id identifier given by AJ |
+
+- Query String Parameters: None
+    
+- Format: application/json
+    
+- Authentication: None
+    
+- Request Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Unique biller ID |
+| transId | Object | M | Object used to identify transaction. Use the same transId on payment request. |
+| transData | Object | M | List of data related to biller to do transaction. Use the same transData on payment request |
+
+- HTTP Headers Response:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | signature response |
+| timestamp | String, date formatted | M | time of AJ response time with time zone information, (ISO 8601) format |
+
+- Response Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Echo from request |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | Echo from request |
+| billInfo | Array of Object | C | Echo from request |
+| billRefInfo | Object | C | Object of bill reference information if transaction successful |
+| descUI | String | M | Text data need to be displayed after inquiry.  <br>  <br>Data content of this field follow the standard JSON String type. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | Echo from request |
+| RRN | String, 12 digit numeric | M | Echo from request |
+| termId | String, max 15 digit | M | Echo from request |
+| channelId | String, max 4 digit | O | Echo from request |
+| subAcqId | String, max 8 digit numeric | C | Echo from request |
+| authKey | String | M | Echo from request |
+| respCode | String | M | Response code from biller/API. See list of response code for detail error information |
+
+**billInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| field | String | M | field name of bill information |
+| isArray | Boolean | M | identifier whether the value is a list of value(array) or single value. If it’s an array, character coma (,) should be used to split it |
+| value | String | M | value of bill information |
+
+**billRefInfo**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billRef | String | M | Reference from biller as proof of payment |
+| additionalInfo1 | String | O | additional info from biller on successful payment |
+| additionalInfo2 | String | O | additional info from biller on successful payment |
+
+
+### Example Request
+```json
+{
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910133",
+        "STAN": "000133",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.00
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    }
+}
+```
+
+### Example Response
+```json
+{
+    "billerId": "45034",
+    "transId": {
+        "RRN": "129999910133",
+        "STAN": "000133",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey" : "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.00,
+        "respCode": "00"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount" : 100000.0,
+        "billKey1" : "",
+        "billKey2" : ""
+    },
+    "billInfo":[
+        {
+            "field": "idCustomer",
+            "ID" : 1,
+            "isArray" : false,
+            "value": "value1"
+        },
+        {
+            "field": "unsoldToken",
+            "ID" : 2,
+            "isArray" : true,
+            "arrValue": ["token1", "token2", "token3"]
+        }
+    ],
+    "billRefInfo":{
+        "billRef": "asdnqoqwe1",
+        "additionalInfo1": "2020-08-20",
+        "additionalInfo2" : null
+    },
+    "descUI" :"blablabla"
+}
+```
+
+# 5.7 Update Balance
+This API is used specifically for **Topup** billers that require some form of data to be passed from/to a **card** itself, usually to **update the balance** of that card after a **Topup** process for that card has been concluded.
+
+- HTTP Method: **POST**
+    
+- Path: /Artajasa/bersamaTopup/updateBalance
+    
+- HTTP Headers:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | Signature Request |
+| timestamp | String, date formatted | M | time of transaction on with time zone information, (ISO 8601) format |
+| acquirerId | String | M | acquirer id identifier given by AJ |
+
+- Query String Parameters: None
+    
+- Format: application/json
+    
+- Authentication: None
+    
+- Request Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Unique biller ID |
+| transId | Object | M | Object used to identify transaction.  <br>  <br>Should have the same values as with the Payment request, albeit with the amount fields set to 0. |
+| transData | Object | M | List of data related to biller to do transaction.  <br>  <br>Should have the same values as with the Payment request, albeit with the amount fields set to 0. |
+| cardData | Object | C | Object used for card based transaction only, its presence and the fields it has depends on the biller. |
+| billInfo | Object | M | List of biller information. The result from this transaction flow’s Payment response should be resent here. |
+| billRefInfo | Object | C | Object of bill reference information if the transaction is successful.  <br>  <br>The result from this transaction flow’s successful Payment response should be resent here. |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | System Trace Audit Number, Value increase by 1 from previous transaction |
+| RRN | String, 12 digit numeric | M | Retrieval reference number — unique ID incremented by end-user request |
+| termId | String, max 15 digit | M | Unique terminal ID per end-user / mobile number |
+| channelId | String, max 4 digit | O | It is used to know the type of channel where the transaction is performed. See list of channel Id for detail channel type information |
+| subAcqId | String, max 8 digit numeric | C | Sub Acquirer ID. It must exist if the Collecting Agent (acquirer) is aggregator that has ‘Sub-Acquirer’ as payment channel. |
+| authKey | String | M | Unique key retrieve from same as in Payment Request. |
+| totalAmount | Numeric | M | Fill with 0. |
+
+**transData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| idCustomer | String | M | customer id from biller |
+| adminFee | Numeric | O | Depends on the biller, but it’s usually unncessary and can be filled with 0. |
+| billAmount | Numeric | O | Depends on the biller, but it’s usually unncessary and can be filled with 0. |
+| billKey1 | String | C | additional bill data identifier |
+| billKey2 | String | C | additional bill data identifier |
+
+**cardData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| encryptedCard | Sting | M | Encoded card data written in string value, often used directly in the function variables that needs it. |
+| authData | String | C | Access card data/cryptographic data for card-based transactions. |
+| topupCode | String | C | Code used for some biller’s topup process. |
+| cardStatus | String | C | Information on the result of the card topup process on the client’s side. |
+
+- HTTP Headers Response:
+    
+
+| **Name** | **Format** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| signature | String | M | signature response |
+| timestamp | String, date formatted | M | time of AJ response time with time zone information, (ISO 8601) format |
+
+- Response Definition:
+    
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| billerId | String | M | Echo from request |
+| transId | Object | M | Object used to identify transaction |
+| transData | Object | M | List of data related to biller to do transaction |
+| billInfo | Array of Object | C | List of bill information from biller. Will be given if transaction is successful |
+| cardData | Object | C | Object used for card based transaction only |
+
+**transId**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| STAN | String, 6 digit numeric | M | Echo from request |
+| RRN | String, 12 digit numeric | M | Echo from request |
+| termId | String, max 15 digit | M | Echo from request |
+| channelId | String, max 4 digit | O | Echo from request |
+| subAcqId | String, max 8 digit numeric | C | Echo from request |
+| respCode | String | M | Response code from biller/API. See list of response code for detail error information |
+
+**transData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| idCustomer | String | M | Echo from request |
+| adminFee | Numeric | O | Echo from request |
+| billAmount | Numeric | O | In most cases it’s echoed from the request, but in some billers it will be filled with the amount sent in the Payment request. |
+| billKey1 | String | O | Echo from request |
+| billKey2 | String | O | Echo from request |
+
+**cardData**
+
+| **Field** | **Data Type** | **Mandatory** | **Description** |
+| --- | --- | --- | --- |
+| encryptedCard | Sting | M | Echo from request |
+| authData | String | C | Access token / Cryptographic data for card based transaction |
+| topupCode | String | C | Echo from request |
+| cardStatus | String | C | Echo from request |
+
+### Example Request
+```json
+{
+    "billerId": "93600911",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey": "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.0
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount": 100000.0,
+        "billKey1": "",
+        "billKey2": "",
+        "originatorCustomerNo": "0857222222210",
+        "originatorCustomerName": "Nama Customer Test"
+    },
+    "billInfo": [
+        {
+            "field": "Biller Transaction ID",
+            "ID": 1,
+            "isArray": false,
+            "value": "946500130314326"
+        }
+    ],
+    "billRefInfo": {
+        "billRef": "946500130314326",
+        "additionalInfo1": null,
+        "additionalInfo2": null
+    },
+    "cardData": {
+        "encodedData": "00907546130000530171754613000053017147F74D2D0BE3639994371FBA2F14B80C000000000101704F000000000600138836C54E01000000000600138836C54E01000000000000000000005227E3ECE1E46EEA0C1254D14FDEBB37",
+        "authData": "0600238236C55A520000000000000000AC1DFA0E77F0C05402192355A70CDE9B",
+        "accessCode": "138414",
+        "cardStatus": "01"
+    }
+}
+```
+
+### Example Response
+```json
+{
+    "billerId": "93600911",
+    "transId": {
+        "RRN": "129999910134",
+        "STAN": "000134",
+        "termId": "12999991",
+        "channelId": "6010",
+        "subAcqId": "000001",
+        "authKey": "6A1CB5460CDFF065E22D9043FA0035B7",
+        "totalAmount": 101500.0,
+        "respCode": "00"
+    },
+    "transData": {
+        "idCustomer": "0857222222210",
+        "adminFee": 1500.0,
+        "billAmount": 100000.0,
+        "billKey1": "",
+        "billKey2": "",
+        "originatorCustomerNo": "0857222222210",
+        "originatorCustomerName": "Nama Customer Test"
+    },
+    "billInfo": [
+        {
+            "field": "Biller Transaction ID",
+            "ID": 1,
+            "isArray": false,
+            "value": "946500130314326"
+        }
+    ],
+    "billRefInfo": {
+        "billRef": "946500130314326",
+        "additionalInfo1": null,
+        "additionalInfo2": null
+    },
+    "cardData": {
+        "encodedData": "00907546130000530171754613000053017147F74D2D0BE3639994371FBA2F14B80C000000000101704F000000000600138836C54E01000000000600138836C54E01000000000000000000005227E3ECE1E46EEA0C1254D14FDEBB37",
+        "authData": "0600238236C55A520000000000000000AC1DFA0E77F0C05402192355A70CDE9B",
+        "accessCode": "138414",
+        "cardStatus": "01"
+    }
+}
+```
