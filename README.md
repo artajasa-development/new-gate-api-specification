@@ -37,23 +37,22 @@ This document is API interface to do payment or topup. This API specification wi
 
 On general, transaction between Collecting Agent, Artajasa and Biller is illustrated below.
 
-<img src="https://content.pstmn.io/a6ed930c-9458-444e-9f7b-009616784be1/aW1hZ2UucG5n" width="471" height="451">
-<!-- ![alt text](./images/trx_flow.jpg) -->
+<img src="./images/trx_flow.jpg" alt="Transaction Flow">
 
 ## 4.1 Timeout Flow
 
 We can categorize timeout flow to timeout of payment and timeout of non-payment (example, inquiry).  
 For timeout of non-payment, the request can be reinitiated by sending new request in another session.
 
-<img src="https://content.pstmn.io/b6c969e1-35aa-4f07-8234-e6ff7ea029d8/aW1hZ2UucG5n" width="614" height="222">
+<img src="./images/timeout-flow-1.png" alt="Timeout Flow">
 
 For timeout of payment, client or sender can check the request using API status. As alternative, client can wait for report transaction on next day, to know whether transaction request is received by destination or not. Same biller support to reverse transaction, it can also be used if payment timeout occur.
 
-<img src="https://content.pstmn.io/7ae20eaa-3d12-4be5-b150-d2f3e14e557f/aW1hZ2UucG5n" width="614" height="222">
+<img src="./images/timeout-flow-2.png" alt="Timeout Flow">
 
 For PLN Prepaid timeout of payment, client or sender shall send API advice.
 
-<img src="https://content.pstmn.io/dbe7c876-6aab-4f9b-9f04-93737f2dee71/aW1hZ2UucG5n" width="614" height="222">
+<img src="./images/timeout-flow-3.png" alt="Timeout Flow">
 
 If client or sender get negative response or no response of advice, retry advice shall be sent automatically. Retry advice shall be sent three times. If still get negative response or no response of advice, client or sender shall performe manual advice. And if still get negative response or no response of manual advice, the transaction is suspect and receipt of suspect shall be printed.  
 Retry advice shall be sent within 30-35 seconds.
@@ -1336,7 +1335,7 @@ Uic9cu1tBPkxTi6IJ6K9IbovdOURk2otn8tunP+/5ZELzALNjeC6TTssZnnCfzxZNMcjwP0nyP3H9iNH
 
 
 # 9\. Receipt Format
-<img src="https://content.pstmn.io/57008023-a785-41f6-9053-9ae596fe9890/aW1hZ2UucG5n" width="386" height="312">
+<img src="./images/receipt-format.png" alt="Receipt Format">
 
 **Field-Field Mandatory:**
 
