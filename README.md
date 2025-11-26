@@ -38,6 +38,7 @@ This document is API interface to do payment or topup. This API specification wi
 On general, transaction between Collecting Agent, Artajasa and Biller is illustrated below.
 
 <img src="https://content.pstmn.io/a6ed930c-9458-444e-9f7b-009616784be1/aW1hZ2UucG5n" width="471" height="451">
+<!-- ![alt text](./images/trx_flow.jpg) -->
 
 ## 4.1 Timeout Flow
 
