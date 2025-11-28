@@ -1,15 +1,24 @@
 # New Gate - API Specification
 
 # Table of Contents
-- [Documentation History](#1-documentation-history)
-- [Document Reference](#2-document-reference)
-- [Message Definition And Transaction Flow](#3-message-definition-and-transaction-flow)
-- [Transaction Flow](#4-transaction-flow)
-- [Message Formats](#5-message-formats)
-- [Channel Id](#6-channel-id)
-- [Response Code](#7-response-code)
-- [Signature](8-signature)
-- [Receipt Format](9-receipt-format)
+- [1. Documentation History](#1-documentation-history)
+- [2. Document Reference](#2-document-reference)
+- [3. Message Definition And Transaction Flow](#3-message-definition-and-transaction-flow)
+- [4. Transaction Flow](#4-transaction-flow)
+- [5. Message Formats](#5-message-formats)
+    - [5.1 Postman Sample](#51-postman-sample)
+    - [5.2 Inquiry](#52-inquiry)
+    - [5.3 Payment](#53-payment)
+    - [5.4 Advice](#54-advice)
+    - [5.5 Check Status](#55-check-status)
+    - [5.6 Reversal](#56-reversal)
+    - [5.7 Update Balance](#57-update-balance)
+- [6. Channel Id](#6-channel-id)
+- [7. Response Code](#7-response-code)
+- [8. Signature](#8-signature)
+    - [8.1. HMAC-SHA256](#81-hmac-sha256)
+    - [8.2. SHA256 with RSA](#82-sha256-with-rsa)
+- [9. Receipt Format](#9-receipt-format)
 
 # 1. Documentation History
 
