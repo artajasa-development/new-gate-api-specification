@@ -1,7 +1,15 @@
 # New Gate - API Specification
 
+# Table of Contents
 - [Documentation History](#1-documentation-history)
-- [Document Reference](#2-document-reference) 
+- [Document Reference](#2-document-reference)
+- [Message Definition And Transaction Flow](#3-message-definition-and-transaction-flow)
+- [Transaction Flow](#4-transaction-flow)
+- [Message Formats](#5-message-formats)
+- [Channel Id](#6-channel-id)
+- [Response Code](#7-response-code)
+- [Signature](8-signature)
+- [Receipt Format](9-receipt-format)
 
 # 1. Documentation History
 
