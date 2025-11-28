@@ -1,6 +1,9 @@
 # New Gate - API Specification
 
-# 1\. Documentation History
+- [Documentation History](#1-documentation-history)
+- [Document Reference](#2-document-reference) 
+
+# 1. Documentation History
 
 | Version | **Author** | Date | **Description** |
 | --- | --- | --- | --- |
@@ -21,7 +24,7 @@
 | 1.14 | PPP | 01/10/2025 | • Added Update Balance API specifically for Card-Based Topup billers only |
 | 1.15.0 | ADK | 15/10/2025 | • Add more information PLN Prepaid Advice flow  <br>• Add RC 41 |
 
-# 2\. Document Reference
+# 2. Document Reference
 
 | **Document Name** | **Version** |
 | --- | --- |
